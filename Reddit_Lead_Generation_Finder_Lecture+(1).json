@@ -1,0 +1,433 @@
+{
+  "name": "Reddit Lead Generation/Finder Lecture",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "41e0ce35-a6bb-4eb6-908d-a620a7857361",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.reddit.com/api/v1/access_token",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "MyScript/1.0 by {your username}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "password"
+            },
+            {
+              "name": "username"
+            },
+            {
+              "name": "password",
+              "value": "yourpassword"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "7e7005f0-b85c-403a-89d6-3ec4388f5e9f",
+      "name": "Reddit Credential",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ef7gWUQtSJyJXLTP",
+          "name": "Reddit credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.children",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "id": "ad3e6108-7658-4a00-b42d-98075bf2111a",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        880,
+        0
+      ],
+      "id": "cdae6c46-003b-49c0-a9e9-5d119609052a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Target Persona-\n\nI am an AI Automation Specialist focused on building custom automation solutions for businesses and individuals. \n\nMy core expertise includes:\n- Creating custom AI integrations using OpenAI, LangChain, and other LLM platforms\n- Integrating disparate systems via APIs and webhooks\n- Setting up and optimizing automation tools like n8n, Make.com, and Zapier\n- Streamlining CRM workflows in platforms like Go Highlevel, Hubspot, and Airtable\n\nMy ideal leads are:\n- Business owners or teams struggling with repetitive manual processes\n- People seeking to automate data collection, processing, or reporting\n- Users of no-code/low-code platforms looking to extend functionality\n- Professionals wanting to leverage AI for content creation, data analysis, or customer service\n- Startups needing custom workflow solutions without hiring full development teams\n- Existing users of n8n, React, or NextJS needing expert help with complex implementations\n\nI provide the most value for projects involving:\n- Custom AI agents and workflows\n- Process automation that saves 10+ hours of manual work weekly\n- API integrations between multiple platforms\n- Extending functionality of existing SaaS products\n- Building internal tools and dashboards for business intelligence\n\n\nCarefully review the details of the following Reddit post:\n\nPost Title: {{ $json.data.title }}\nPost Body/Selftext: {{ $json.data.selftext }}\nAuthor: {{ $json.data.author }}\nPost URL: {{ $json.data.url }}\nUpvote Ratio: {{ $json.data.upvote_ratio }}(Indicator of community agreement/visibility)\nNumber of Comments: {{ $json.data.num_comments }}(Indicator of discussion level/engagement)\n"
+            },
+            {
+              "content": "=You are an elite Lead Qualification Analyst specializing in identifying high-value automation opportunities from Reddit posts. Your expertise in n8n, AI automation, and integration workflows makes you uniquely qualified to identify potential clients who match our target persona.\n\n## EVALUATION FRAMEWORK\n\n### STEP 1: PERSONA ALIGNMENT ASSESSMENT (40% weight)\nEvaluate how closely the post aligns with our target customer:\n- Author demonstrates need for custom automation solutions\n- Post mentions technologies in our expertise stack (n8n, React, NextJS, APIs, AI)\n- Problem complexity suggests need for specialized freelance assistance\n- Language indicates decision-making authority or purchasing intent\n\n### STEP 2: OPPORTUNITY IDENTIFICATION (35% weight)\nCategorize the specific need or opportunity:\n[A] SUPPORT: Technical help with n8n implementation or troubleshooting\n[B] SOLUTION: Business problem that could be solved with automation\n[C] COMPARISON: Evaluating n8n against alternatives, suggesting consideration phase\n[D] SHOWCASE: Sharing complex workflows, indicating advanced usage\n[E] FEATURE: Requesting capabilities that could be solved with custom development\n[F] INTEGRATION: Connecting systems or APIs requiring specialized knowledge\n\n### STEP 3: ENGAGEMENT POTENTIAL (25% weight)\nAnalyze factors suggesting conversion potential:\n- Urgency indicators in language (\"need ASAP\", \"stuck\", \"deadline\")\n- Complexity level requiring expert intervention\n- Evidence of previous automation attempts\n- Mentions of budget, timeline, or project parameters\n- Quality of problem articulation and technical sophistication\n\n### STEP 4: RESOURCE EXTRACTION\nExtract valuable contextual information:\n- Scan for URLs to: Google Drive, GitHub, YouTube, documentation, blog posts\n- Note technology stack details or specific error messages\n- Identify existing tools/platforms mentioned\n- Extract any timeline or priority indicators\n\n## CLASSIFICATION OUTPUTS\n\nBased on your analysis, provide a structured determination:\n\n1. LEAD CLASSIFICATION: (Lead | Not Lead)\n2. LEAD TYPE: (Support Request | Solution Inquiry | Tool Comparison | Showcase | Feature Request | Integration Need | General Question)\n3. PRIORITY: (High | Medium | Low)\n4. REASONING: Concise explanation (max 3 sentences) justifying your classification and highlighting key opportunity indicators\n5. RESOURCE LINK: Extract the most relevant URL if available (null if none)\n\n## CRITICAL EXCLUSIONS\n\nDO NOT classify as leads:\n- Posts primarily showcasing third-party products unrelated to n8n\n- Simple questions answerable through documentation\n- Posts from users explicitly stating they've already hired help\n- General coding projects without automation/integration focus\n- Questions about unrelated technologies unless specifically wanting to integrate with n8n\n\nYour analysis must be data-driven, comprehensive, and focused on identifying genuine opportunities for an AI automation freelancer specializing in n8n and related technologies.\n\n## Output Requirements:\nYou MUST return ONLY a valid JSON object containing the following fields:\n\n{\n  \"is_lead\": true | false, // Boolean: Does this post qualify as a lead based on the persona and guidelines?\n  \"lead_type\": \"string\", // Classify the lead: e.g., \"Support Request\", \"Use Case Inquiry\", \"Showcase (Built with n8n)\", \"Competitor Comparison\", \"Positive Feedback\", \"Feature Request\", \"General Question\", \"Not a Lead\"\n  \"priority\": \"string\", // Estimate priority: \"High\", \"Medium\", \"Low\", \"None\"\n  \"post_body\": \"{{ $json.data.selftext }}\", // The original selftext\n  \"reasoning\": \"string\", // Concise explanation for classification and priority. Mention if a resource link was found/not found.\n  \"resource_link\": \"string | null\", // EXTRACT the first relevant URL (Google Drive, YouTube, GitHub, Blog, Template etc.) found in the post body. Return null if no relevant link is explicitly shared by the author.\n  \"author\": \"{{ $json.data.author }}\", // The Reddit author's username\n  \"reddit_url\": \"{{ $json.data.url }}\" // The full URL to the Reddit post\n}",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "16ae7e60-7e70-4957-8c16-5672274369a1",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "9WpWmiE8A7Gl3BYM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y_NzCLLzV3zwy_r0wCVK6lelc2APhWoRod_inwMS1oo",
+          "mode": "list",
+          "cachedResultName": "Reddit Lead Gen",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y_NzCLLzV3zwy_r0wCVK6lelc2APhWoRod_inwMS1oo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y_NzCLLzV3zwy_r0wCVK6lelc2APhWoRod_inwMS1oo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reddit Author": "={{ $json.message.content.author }}",
+            "Thread Body": "={{ $json.message.content.post_body }}",
+            "Lead": "={{ $json.message.content.is_lead }}",
+            "Lead Type": "={{ $json.message.content.lead_type }}",
+            "Priority": "={{ $json.message.content.priority }}",
+            "Reasoning": "={{ $json.message.content.reasoning }}",
+            "Resource link": "={{ $json.message.content.resource_link }}",
+            "Post url": "={{ $json.message.content.reddit_url }}",
+            "Post ID": "={{ $('Loop Over Items').item.json.data.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Reddit Author",
+              "displayName": "Reddit Author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Thread Body",
+              "displayName": "Thread Body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead",
+              "displayName": "Lead",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Type",
+              "displayName": "Lead Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reasoning",
+              "displayName": "Reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resource link",
+              "displayName": "Resource link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post url",
+              "displayName": "Post url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post ID",
+              "displayName": "Post ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1480,
+        0
+      ],
+      "id": "c30ead82-bac5-48df-9a77-e4d5fd4a4a41",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://oauth.reddit.com/r/n8n/hot.json?limit=10",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=bearer {{ $('Reddit Credential').item.json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "MyScript/1.0 by {your username}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        380,
+        240
+      ],
+      "id": "b150351c-355e-4e3a-9bd8-9e8d470cd91c",
+      "name": "Hot topic top 10"
+    },
+    {
+      "parameters": {
+        "url": "https://oauth.reddit.com/r/n8n/new.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.token_type }} {{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "MyScript/1.0 by Aggressive-Olive-162"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "a58b3331-34ca-4cbb-8333-09905e6fee15",
+      "name": "New Post"
+    }
+  ],
+  "pinData": {
+    "Reddit Credential": [
+      {
+        "json": {
+          "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IlNIQTI1NjpzS3dsMnlsV0VtMjVmcXhwTU40cWY4MXE2OWFFdWFyMnpLMUdhVGxjdWNZIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyIiwiZXhwIjoxNzQ1ODg5NjE2Ljk2NDMwNSwiaWF0IjoxNzQ1ODAzMjE2Ljk2NDMwNSwianRpIjoiQXNDcGQ0a09jckZVczVpaUVKcXp5MEo4U1lwTUJRIiwiY2lkIjoiUjlsb2pkNkpsTm96N1p2MzY4U0hXZyIsImxpZCI6InQyXzFvN3B4bHp3a2UiLCJhaWQiOiJ0Ml8xbzdweGx6d2tlIiwibGNhIjoxNzQ1NzkxMzI0NDQ0LCJzY3AiOiJlSnlLVnRKU2lnVUVBQURfX3dOekFTYyIsImZsbyI6OX0.iiyPLOFAqOGxAtNnmJCxno7TrLMr80Dm4Au835na8VTzJTy93UlBHBICsJAjJ-rvxGdeli1XtEs9inXOswWeyoWeGBkCb-upIBVZkh0uFK9VQinba0kcgwxw3_HlAltfzDOnANWg9Qw2LIf77kMQQ59jKAwv6hoQ_5TWieg0x69FjQA79J020ViEwjiSzpjUJDozzPpxfOTC-P-pK9dDCcR1bz7KSwpUhJ0cu057IygRWOE91qKLAX9O_-IZjCXBv_BTf9N2b04do6TZNGvIfj6n776ENxu6XjxpfQDVhqhDxCxkqlq3rTSpE_UenXUX5XPkMP_Q2Y8nBf7pqiTBoA",
+          "token_type": "bearer",
+          "expires_in": 86400,
+          "scope": "*"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Reddit Credential",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Credential": {
+      "main": [
+        [
+          {
+            "node": "New Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Post": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cd1cd0e7-3c86-4de4-8892-3885fa8d3e1d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eae46237f0b03e1e21495b9d127d17ad71e5e7504c7d7b1084f9a3d34657c561"
+  },
+  "id": "MTQspfn5kassFB6C",
+  "tags": []
+}
