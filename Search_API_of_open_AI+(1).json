@@ -1,0 +1,308 @@
+{
+  "name": "Search API of open AI",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -900,
+        295
+      ],
+      "id": "dfc06454-709d-43d9-a0ba-446b88a9ff48",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FYijrKhO_KSNg7AAFjvlgM6MIApbrzo0OQqStVAzabI",
+          "mode": "list",
+          "cachedResultName": "Search API of OpenAI (Company research)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FYijrKhO_KSNg7AAFjvlgM6MIApbrzo0OQqStVAzabI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FYijrKhO_KSNg7AAFjvlgM6MIApbrzo0OQqStVAzabI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -680,
+        295
+      ],
+      "id": "008690d9-a942-439a-9131-287e41324125",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "instructions": "Clean the JSON in the 'content' string to make it usable",
+        "codeGeneratedForPrompt": "Nettoie le JSON dans le string \"content\" pour qu'il soit exploitable",
+        "jsCode": "const items = $input.all();\nconst cleanedItems = items.map((item) => {\n  const content = item.json.choices[0].message.content;\n  const jsonStart = content.indexOf(\"{\");\n  const jsonEnd = content.lastIndexOf(\"}\") + 1;\n  const jsonString = content.slice(jsonStart, jsonEnd);\n  let cleanedJson;\n  try {\n    cleanedJson = JSON.parse(jsonString);\n  } catch (error) {\n    // If JSON parsing fails, return original content\n    cleanedJson = content;\n  }\n  item.json.cleanedContent = cleanedJson;\n  return item;\n});\nreturn cleanedItems;\n"
+      },
+      "type": "n8n-nodes-base.aiTransform",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        300
+      ],
+      "id": "7a1c3a64-04f3-402c-a769-977c40736099",
+      "name": "AI Transform"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1FYijrKhO_KSNg7AAFjvlgM6MIApbrzo0OQqStVAzabI",
+          "mode": "list",
+          "cachedResultName": "Search API of OpenAI (Company research)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FYijrKhO_KSNg7AAFjvlgM6MIApbrzo0OQqStVAzabI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FYijrKhO_KSNg7AAFjvlgM6MIApbrzo0OQqStVAzabI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "domain": "={{ $('Google Sheets').item.json.domain }}",
+            "Customer Type": "={{ $('AI Transform').item.json.cleanedContent.customer_type }}",
+            "Free Trial": "={{ $('AI Transform').item.json.cleanedContent.free_trial }}",
+            "Customer Case Studies": "={{ $('AI Transform').item.json.cleanedContent.customer_case_studies }}",
+            "Blog Page": "={{ $('AI Transform').item.json.cleanedContent.blog }}",
+            "Integrations": "={{ $('AI Transform').item.json.cleanedContent.integrations }}"
+          },
+          "matchingColumns": [
+            "domain"
+          ],
+          "schema": [
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Customer Type",
+              "displayName": "Customer Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Free Trial",
+              "displayName": "Free Trial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Customer Case Studies",
+              "displayName": "Customer Case Studies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Blog Page",
+              "displayName": "Blog Page",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Integrations",
+              "displayName": "Integrations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        200,
+        300
+      ],
+      "id": "68b45a62-6d02-4ac9-b461-28b1e1712a11",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -460,
+        295
+      ],
+      "id": "06ae31e0-18da-4e42-8665-589d41625bda",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-search-preview\",\n  \"web_search_options\": {\n    \"search_context_size\": \"low\"\n  },\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"You are an AI specialized in researching and analyzing SaaS companies based on a domain name. When provided with a domain, your mission is to retrieve and analyze the following information: Customer type: Determine if the company is B2B (Business to Business) or B2C (Business to Consumer) based on product positioning and target audience. Free trial: Identify if a free trial is offered. Customer case studies: Find the direct link to a page containing case studies or customer testimonials, if available. Blog: Find the link to the company's official blog. Integrations: List the main integrations with other tools or platforms. Specific instructions: Analyze the company's website and documentation if accessible. Check for a Customers, Case Studies or equivalent section for case studies. Identify if a Blog section is present and get its URL. Look for an Integrations or Apps section to get the list of integrations. If information is missing, indicate 'nop' instead of leaving a field empty. Provide your answers in JSON format only. Here is the domain: {{ $json.domain }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        300
+      ],
+      "id": "7ecc2062-df28-40eb-bf04-0d049f99bb8b",
+      "name": "Open AI API search"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Transform": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Open AI API search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open AI API search": {
+      "main": [
+        [
+          {
+            "node": "AI Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ce10f1b4-ce5f-4456-9694-2fe184f99a86",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eae46237f0b03e1e21495b9d127d17ad71e5e7504c7d7b1084f9a3d34657c561"
+  },
+  "id": "B9nZ2w0TMZRBOA8W",
+  "tags": []
+}
