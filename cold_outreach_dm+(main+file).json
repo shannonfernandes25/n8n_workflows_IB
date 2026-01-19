@@ -1,0 +1,344 @@
+{
+  "name": "delete this cold outreach dm",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        200
+      ],
+      "id": "a410a9fa-9b01-4599-b548-ed1fe01428ae",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a friendly and direct icebreaker for a personalized event invitation email. The message should:\n1. Be written in an engaging, professional tone\n2. Reference specific details from the person's LinkedIn profile and company\n3. End with \"Figured I'd reach out.\"\n4. Invite them to speak at our upcoming industry event\n5. Within 250 words.\n6. Never include this line: I hope this message finds you well! \n\nHere's information about the recipient:\nFirst name: {{ $('Google Sheets').item.json['First Name'] }}\nCompany description: {{ $('Google Sheets').item.json['Company Description'] }}\nCompany name: {{ $json.COMPANY_Name }}\nJob Title: {{ $('Google Sheets').item.json.Title }}\n\nOur event is an exclusive conference focused on AI and automation innovations in business processes. We're bringing together thought leaders and practitioners to share cutting-edge approaches and successful implementation strategies.\n\nYou have access to a LinkedIn Profile tool. Use this tool to gather additional information about the recipient before writing your message. To use the tool, simply indicate that you want to call the LinkedIn profile tool, then incorporate relevant information from their profile into your message.\n\nFormatting instruction:\nReturn ONLY a JSON object with a single \"icebreaker\" key containing the personalized message.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        180,
+        200
+      ],
+      "id": "158bf143-a7bf-4915-b23f-7d53366422dc",
+      "name": "AI Agent",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        208,
+        420
+      ],
+      "id": "bb57a1d2-3524-4589-9435-c54961f0fe2d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "9WpWmiE8A7Gl3BYM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"icebreaker\":\"message\"}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        328,
+        420
+      ],
+      "id": "539ab7cc-7ab3-4f95-8ec4-0f7b6477255b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1lvv24MRD_MqZyKgbFh2OGvaIYmjXPhmHW8LPi5EM2Fk",
+          "mode": "list",
+          "cachedResultName": "Cold Outreach DM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lvv24MRD_MqZyKgbFh2OGvaIYmjXPhmHW8LPi5EM2Fk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lvv24MRD_MqZyKgbFh2OGvaIYmjXPhmHW8LPi5EM2Fk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Linkedin Url": "={{ $('Google Sheets').item.json['Linkedin Url'] }}",
+            "Icebreaker": "={{ $json.output.icebreaker }}"
+          },
+          "matchingColumns": [
+            "Linkedin Url"
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Linkedin Url",
+              "displayName": "Linkedin Url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COMPANY_INDUSTRY",
+              "displayName": "COMPANY_INDUSTRY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COMPANY_EMPLOYEE_COUNT",
+              "displayName": "COMPANY_EMPLOYEE_COUNT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Description",
+              "displayName": "Company Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Icebreaker",
+              "displayName": "Icebreaker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        560,
+        200
+      ],
+      "id": "27eae2d9-960d-403e-b595-dd34a6fb165c",
+      "name": "Update Google sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f75c0843-d5a8-4043-be4f-4f5fcb09b456",
+              "name": "COMPANY_Name",
+              "value": "={{$json['Company Name'].replace(/\\s+Ltd\\.?$/i, '').replace(/(,?\\\\\\\\s*)?(Inc|LLC|Corp|Ltd|Limited|Corporation|Company|Group|Holdings|International|Solutions|Technologies|Enterprises|Partners|Association|PLC|S\\\\\\\\.A\\\\\\\\.|GmbH|Co\\\\\\\\.|Services)\\\\\\\\.?$/i, '').trim()}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -40,
+        200
+      ],
+      "id": "425ec4cc-4eea-4f1b-bc4a-8e57ec294fd4",
+      "name": "Clean up company"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1lvv24MRD_MqZyKgbFh2OGvaIYmjXPhmHW8LPi5EM2Fk",
+          "mode": "list",
+          "cachedResultName": "Cold Outreach DM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lvv24MRD_MqZyKgbFh2OGvaIYmjXPhmHW8LPi5EM2Fk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lvv24MRD_MqZyKgbFh2OGvaIYmjXPhmHW8LPi5EM2Fk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -260,
+        200
+      ],
+      "id": "09a9595e-bbcf-474d-8c79-2352ce93edce",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Update Google sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean up company": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Clean up company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d528374f-b2e1-431f-aeaa-55a49e0c71bc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eae46237f0b03e1e21495b9d127d17ad71e5e7504c7d7b1084f9a3d34657c561"
+  },
+  "id": "EIem0Pc9COsS8rZU",
+  "tags": []
+}
