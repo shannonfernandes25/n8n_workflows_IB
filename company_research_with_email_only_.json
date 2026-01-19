@@ -1,0 +1,364 @@
+{
+  "name": "company research with email only!",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "10108306-bedb-49ca-85dc-d87002b1ba63",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -1240,
+        380
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "5aca0836-4797-41d3-8094-f3a170e5a3c9",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "left"
+            },
+            {
+              "id": "e6090801-2a22-4627-8a44-e6b29c9b8ef9",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "id": "d33ab0e0-042f-4b0f-89c3-a40e9967ff5c",
+      "name": "Filter",
+      "type": "n8n-nodes-base.filter",
+      "position": [
+        -800,
+        380
+      ],
+      "notesInFlow": true,
+      "typeVersion": 2,
+      "notes": "Only process rows which have empty processed_at field"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MsS5p_ubBwrontXv2dWftBk-8QVpAcGmjd1qtO3iMn8",
+          "mode": "list",
+          "cachedResultName": " Company research with email only",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MsS5p_ubBwrontXv2dWftBk-8QVpAcGmjd1qtO3iMn8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MsS5p_ubBwrontXv2dWftBk-8QVpAcGmjd1qtO3iMn8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "fb5b6159-25ec-43ce-a8b5-a2fbee5a85b6",
+      "name": "Get all rows from Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1020,
+        380
+      ],
+      "typeVersion": 4.4,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -580,
+        380
+      ],
+      "id": "ad1361a1-7027-4f71-b2a0-dbe5eaece414",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "model": "=perplexity/sonar-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        600
+      ],
+      "id": "368e1d7c-32df-439e-ab36-2323a64d95bc",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "phGxejHs9UnNizun",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        380
+      ],
+      "id": "8ee4f6ea-782d-4d8f-9552-c04f94dcdfe9",
+      "name": "Wait",
+      "webhookId": "9a6e9077-4588-443e-895b-a7a11b2623c4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the company I want you to research:\n\n{{$json[\"email\"].split('@')[1]}}\n\n ",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a Senior Corporate Analyst specializing in synthesizing complex business data into actionable insights for executive and sales teams. Your goal is to deliver a structured, concise, and strategic report that highlights critical information about a target company, enabling leadership to make informed decisions and identify growth opportunities.\n\nStructure & Guidelines:\n\nTone & Format:\n\nProfessional, clear, and concise. Avoid jargon.\n\nUse bullet points, subheadings, and bolded keywords for skimmability.\n\nPrioritize insights over raw data.\n\nCore Sections:\n\n  1. Company Overview\n    Brief history, mission, vision, and core values.\n    Key leadership (CEO, C-suite) and recent executive changes.\n    Headquarters, global presence, and employee count.\n\n  2. Business Profile\n    Core products/services and revenue streams.\n    Target markets, customer segments, and geographic focus.\n    Unique Value Proposition (UVP) and competitive differentiators.\n\n  3. Key Highlights\n    Recent financial performance (revenue, profit trends, investment rounds).\n    Strategic partnerships, M&A activity, or expansions.\n    Innovations, patents, or R&D focus areas.\n    Reputation highlights (awards, ESG initiatives, controversies).\n\n  4. Strategic Insights\n    SWOT analysis (Strengths, Weaknesses, Opportunities, Threats).\n    Growth strategy alignment (e.g., digital transformation, market penetration).\n\n    Risks (market, operational, regulatory) and mitigations.\n\n  5. Sales Opportunities\n    Potential upsell/cross-sell avenues based on product portfolio.\n    Customer pain points the sales team can address.\n    Emerging trends aligning with the company’s capabilities.\n\n  6. Competitor Snapshot\n    Top 3 competitors and their market positioning.\n    Competitive gaps the target company could exploit.\n\nData Sources (if applicable):\n\nCite recent news, earnings calls, press releases, Crunchbase, LinkedIn, or industry reports.\n\nFlag outdated or unverified information.\n\nFinal Output:\n\nSummarize key takeaways in a 3-5 bullet point \"Executive Summary\" at the top.\n\nConclude with \"Recommended Actions\" tailored for executives (e.g., partnership opportunities) and sales teams (e.g., target accounts).\n\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -340,
+        380
+      ],
+      "id": "6d421c59-c457-45de-b62d-2b00b11bde96",
+      "name": "Company research using Perplexity"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1MsS5p_ubBwrontXv2dWftBk-8QVpAcGmjd1qtO3iMn8",
+          "mode": "list",
+          "cachedResultName": " Company research with email only",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MsS5p_ubBwrontXv2dWftBk-8QVpAcGmjd1qtO3iMn8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MsS5p_ubBwrontXv2dWftBk-8QVpAcGmjd1qtO3iMn8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $('Get all rows from Sheets').item.json.email }}",
+            "Summary": "={{ $json.text }}",
+            "Status": "Done"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f7c7ff97-669f-48aa-8677-30b9728eba33",
+      "name": "Save company data",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        20,
+        380
+      ],
+      "typeVersion": 4.4,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all rows from Sheets": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get all rows from Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Company research using Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Company research using Perplexity",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company research using Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Save company data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save company data": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0de234de-8f4e-4d48-bcd0-5e295d897880",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eae46237f0b03e1e21495b9d127d17ad71e5e7504c7d7b1084f9a3d34657c561"
+  },
+  "id": "kUDwq4S2es75llRX",
+  "tags": []
+}
