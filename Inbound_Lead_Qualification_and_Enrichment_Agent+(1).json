@@ -1,0 +1,396 @@
+{
+  "name": "Inbound Lead Qualification and Enrichment Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apimaestro~linkedin-profile-batch-scraper-no-cookies-required/run-sync-get-dataset-items?token=apify_api_DNmFG22AogqleZPfv7M0aonm58cefl0PlvtM",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"usernames\": [\n        \"{{ $json.form_response.answers['LinkedIn Profile URL'] }}\"\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        160
+      ],
+      "id": "4755cb23-1e01-4d6a-85ce-e7a5a2809a7c",
+      "name": "Profile Scraping"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/dev_fusion~linkedin-company-scraper/run-sync-get-dataset-items?token=apify_api_DNmFG22AogqleZPfv7M0aonm58cefl0PlvtM",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"profileUrls\": [\n        \"{{ $json.experience[0].company_linkedin_url }}\"\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        160
+      ],
+      "id": "14ebc1e8-76be-4664-904c-8a36ac246552",
+      "name": "Company Scraping"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/6sigmag~fast-website-content-crawler/run-sync-get-dataset-items?token=apify_api_DNmFG22AogqleZPfv7M0aonm58cefl0PlvtM",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"startUrls\": [\n        \"{{ $('Company Scraping').item.json.callToAction.url }}\"\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        160
+      ],
+      "id": "1ab80596-de0f-4e30-8637-7613c3013bad",
+      "name": "Web Scraping"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here's all the data:\n\nBusiness Description Scraped directly from the website:\n\n\"{{ $json.text }} and Industry is {{ $('Company Scraping').item.json.industry }}\"",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI lead qualification agent embedded in a sales automation workflow. Your job is to qualify leads strictly based on industry relevance.\n\nYou will be given lead data scraped from their LinkedIn profile, company LinkedIn page, company website, and form inputs. Evaluate whether the lead fits into **any** of the following industries:\n\n- Lead Generation SaaS\n- Sales SaaS\n- Marketing SaaS\n\nThese are **hard qualification rules**. If the lead is not in one of these industries, they are automatically disqualified.\n\nOutput your evaluation in this structured format:\n\n1. Status: \"Qualified\" or \"Unqualified\"\n2. Score: 1 for Qualified, 0 for Unqualified\n3. Reason: A clear, one-sentence explanation of why the lead was or wasn't qualified, based on the scraped industry context.\n\nKeep your language simple and easily understandable at a glance. Provide enough context in your reason to support the decision but do not include extra information.\n\nIf there is not enough data to confidently assess the industry, err on the side of \"Unqualified\"."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -20,
+        160
+      ],
+      "id": "e214a65f-7cb1-4343-84af-d4633a7cdb90",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -20,
+        380
+      ],
+      "id": "e987b942-d8f1-45a7-921a-0ba0b56334c4",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "9WpWmiE8A7Gl3BYM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formId": "jV4cFuS4",
+        "onlyAnswers": false
+      },
+      "type": "n8n-nodes-base.typeformTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -960,
+        160
+      ],
+      "id": "dac243ba-39b1-434e-9ab0-f422a472f60b",
+      "name": "Typeform Trigger",
+      "webhookId": "2ce6dfe4-6bff-4f63-8040-a527a20bb0f5",
+      "credentials": {
+        "typeformApi": {
+          "id": "k3lIPnan7nNg1LHz",
+          "name": "Typeform account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"status\": \"Qualified\",\n  \"score\": 1,\n  \"reason\": \"Company is a marketing SaaS platform targeting B2B customers.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        120,
+        380
+      ],
+      "id": "90091342-2fcc-4c7f-9bab-5237932d673e",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1tRC-YswaBp7Hc4OlqlfCLEHvkCMeiyoVelQc2Ufazcg",
+          "mode": "list",
+          "cachedResultName": "Inbound Lead Qualification and Enrichment Agent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tRC-YswaBp7Hc4OlqlfCLEHvkCMeiyoVelQc2Ufazcg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tRC-YswaBp7Hc4OlqlfCLEHvkCMeiyoVelQc2Ufazcg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.output.status }}",
+            "reason": "={{ $json.output.reason }}",
+            "Full Name": "={{ $('Typeform Trigger').item.json.form_response.answers['Full Name'] }}",
+            "Website/Domain": "={{ $('Typeform Trigger').item.json.form_response.answers['Website/Domain'] }}",
+            "Email": "={{ $('Typeform Trigger').item.json.form_response.answers.Email }}",
+            "LinkedIn Profile URL": "={{ $('Typeform Trigger').item.json.form_response.answers['LinkedIn Profile URL'] }}",
+            "Problem": "={{ $('Typeform Trigger').item.json.form_response.answers.Problem }}",
+            "Goal": "={{ $('Typeform Trigger').item.json.form_response.answers.Goal }}",
+            "Current Number of Incoming Leads": "={{ $('Typeform Trigger').item.json.form_response.answers['Current Number of Incoming Leads'] }}",
+            "Is there already a team?": "={{ $('Typeform Trigger').item.json.form_response.answers['Is there already a team?'] }}",
+            "How soon can it be started?": "={{ $('Typeform Trigger').item.json.form_response.answers['How soon can it be started?'] }}",
+            "score [0 | 1]": "={{ $json.output.score }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score [0 | 1]",
+              "displayName": "score [0 | 1]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website/Domain",
+              "displayName": "Website/Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn Profile URL",
+              "displayName": "LinkedIn Profile URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Problem",
+              "displayName": "Problem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Goal",
+              "displayName": "Goal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Current Number of Incoming Leads",
+              "displayName": "Current Number of Incoming Leads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Is there already a team?",
+              "displayName": "Is there already a team?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "How soon can it be started?",
+              "displayName": "How soon can it be started?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        360,
+        160
+      ],
+      "id": "b1564a14-0f8e-4b46-8daa-6088a49f9083",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Profile Scraping": {
+      "main": [
+        [
+          {
+            "node": "Company Scraping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Scraping": {
+      "main": [
+        [
+          {
+            "node": "Web Scraping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Scraping": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Typeform Trigger": {
+      "main": [
+        [
+          {
+            "node": "Profile Scraping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4c5f0f96-00ef-4c4a-abdb-48759786791f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eae46237f0b03e1e21495b9d127d17ad71e5e7504c7d7b1084f9a3d34657c561"
+  },
+  "id": "xEeGSe7oaK1nD13I",
+  "tags": []
+}
