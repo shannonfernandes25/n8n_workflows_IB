@@ -1,0 +1,1107 @@
+{
+  "name": "Hyper Personalized Cold Email & Lead Gen System",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Create Sheet').item.json.spreadsheetId }}/values/Sheet1!A:Z:append?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\"first_name\",\"last_name\",\"Website\",\"linkedin_url\",\"email\",\"organization/linkedin_url\",\"country\",\"Personal LinkedIn headline\",\"organization/name\",\"title\",\"organization/founded_year\"],[\"{{ $('Run Apify Scraper for Apollo').first().json.first_name }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.last_name }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.organization.website_url }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.linkedin_url }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.email }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.organization.linkedin_url }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.country }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.headline }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.organization.name }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.title }}\",\"{{ $('Run Apify Scraper for Apollo').first().json.organization.founded_year }}\"]\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1300,
+        -160
+      ],
+      "id": "a3875c64-be6c-410d-a618-b351cc6ac7b0",
+      "name": "Put headers in Google Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        480,
+        20
+      ],
+      "id": "b61b7f0d-b29a-4ee2-804d-3df43c9c4a16",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Your task is to personalize an email.\n\nYou'll do this by taking, as input, a lead information from their linkedin profile and other sources, and then editing 5 templates for different sections of the email: subject, personalized first line, offer, call to action, and a PS field.\n\nYour templates are below.\n\nSubject: \"hi {name},\"\nPersonalized First Line: \"I know you're doing {thing} and I've been following {relatedThing} for a while so I figured it made sense to chat\"\nOffer: \"The TLDR: I think I can add ~$5K/mo to {theirParaphrasedBusiness} with a few automated systems\"\nCall to Action: \"What you are looking at is actually one of the automated emails from the systems I built that helped SaviFlow pull in an extra $5k/mo in a few months. It's completely risk-free; I'd guarantee at least 10 appointments booked or you wouldn’t pay.\"\nPS: \"even if we just chat I'd love to hear about what you're doing with {thing}\"\n\nGuidelines:\n1. Your tone of voice should be \"casual bar conversation\" and very spartan. No fancy language. \n2. Look for plausible (but vague) connections wherever possible.\n3. Do not just repeat data from the LinkedIn profile verbatim. Paraphrase, so they think a human wrote it.\n4. Make sure the subject line is non-capitalized, even if it's grammatically incorrect. This makes the email seem human.\n5. Respond in JSON using this format:\n\n{\"Subject\":\"\",\"personalFirstLine\":\"\",\"Offer\":\"\",\"callToAction\":\"\",\"ps\":\"\"}"
+            },
+            {
+              "content": "={{ $node['Loop Over Items'].json.toJsonString() }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1340,
+        20
+      ],
+      "id": "584094df-17cb-4ca8-a7ec-83700ccd5cc7",
+      "name": "Create email",
+      "credentials": {
+        "openAiApi": {
+          "id": "9WpWmiE8A7Gl3BYM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Put headers in Personalized Email Sheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Subject": "={{ $json.message.content.Subject }}",
+            "Personalized First Line": "={{ $json.message.content.personalFirstLine }}",
+            "Offer": "={{ $json.message.content.Offer }}",
+            "callToAction": "={{ $json.message.content.callToAction }}",
+            "ps": "={{ $json.message.content.ps }}",
+            "emailAddress": "={{ $('Loop Over Items').item.json.email }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personalized First Line",
+              "displayName": "Personalized First Line",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Offer",
+              "displayName": "Offer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "callToAction",
+              "displayName": "callToAction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ps",
+              "displayName": "ps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "emailAddress",
+              "displayName": "emailAddress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1740,
+        20
+      ],
+      "id": "9345a18e-8c8f-4aef-b21b-80a8fbe70ceb",
+      "name": "Add Custom Email to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $node['Put headers in Google Sheet'].json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        20
+      ],
+      "id": "36df1ed8-466d-4e3f-bac2-a4bb6e74b83c",
+      "name": "Get Lead Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $node['Put headers in Google Sheet'].json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "first_name": "={{ $json['First Name'] }}",
+            "last_name": "={{ $json['Last Name'] }}",
+            "Website": "={{ $json['Company Website'] }}",
+            "linkedin_url": "={{ $json['Linkedin URL'] }}",
+            "email": "={{ $json.Email }}",
+            "organization/linkedin_url": "={{ $json['Company LinkedIn'] }}",
+            "organization/name": "={{ $json['Company Name'] }}",
+            "organization/founded_year": "={{ $json['Company Founded Year'] }}",
+            "Personal LinkedIn headline": "={{ $json['Linkedin Headline'] }}",
+            "country": "={{ $json.Country }}",
+            "title": "={{ $json.Title }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "first_name",
+              "displayName": "first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_name",
+              "displayName": "last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_url",
+              "displayName": "linkedin_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "organization/linkedin_url",
+              "displayName": "organization/linkedin_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personal LinkedIn headline",
+              "displayName": "Personal LinkedIn headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "organization/name",
+              "displayName": "organization/name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "organization/founded_year",
+              "displayName": "organization/founded_year",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1020,
+        20
+      ],
+      "id": "a9f81f1f-3c7d-4843-92b7-8efb04f8a3d7",
+      "name": "Add Lead Data to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "=RAW Lead Data {{ $today.format('dd/LL/yyyy') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1500,
+        -160
+      ],
+      "id": "8f51cc2a-91cd-40cc-b393-2156071aa593",
+      "name": "Create Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f9b67092-1300-43fc-a343-7c6cf878b44f",
+              "leftValue": "={{ $itemIndex}}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1700,
+        0
+      ],
+      "id": "866b2497-67ee-4eec-9a2b-3175e3cfe9c6",
+      "name": "If Item = 1 "
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/code_crafter~apollo-io-scraper/run-sync-get-dataset-items?token=apify_api_YOUR_API_KEY",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"getPersonalEmails\": true,\n    \"getWorkEmails\": true,\n    \"totalRecords\": 500,\n    \"url\": \"{{ $json['What is your Apollo Link?'] }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2120,
+        0
+      ],
+      "id": "c77948ff-f88b-4e6a-a59b-123de2843dd1",
+      "name": "Run Apify Scraper for Apollo"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2060,
+        180
+      ],
+      "id": "cfd31a62-ff5d-49f9-b4c8-fd8276ed7e4c",
+      "name": "Wait",
+      "webhookId": "12749ba2-bbe0-4044-99e6-1d26bda4f319"
+    },
+    {
+      "parameters": {
+        "sendTo": "manthan@leadgenman.com",
+        "subject": "New Leads Email Scraped",
+        "emailType": "text",
+        "message": "=You have scraped a new set of leads and crafted a personalized emails that is ready to go in Instantly: \n\nGoogle Sheet w Raw Data: https://docs.google.com/spreadsheets/d/{{ $node['Put headers in Google Sheet'].json.spreadsheetId }}/edit?gid=0#gid=0 \n\nGoogle Sheet with Personalized Emails: https://docs.google.com/spreadsheets/d/{{ $('Put headers in Personalized Email Sheet').first().json.spreadsheetId }}/edit?gid=0#gid=0",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1060,
+        -140
+      ],
+      "id": "bce386dd-cb36-496a-943c-b921c6b93978",
+      "name": "Gmail",
+      "webhookId": "42ad4ed3-0221-4ed3-9131-f8306f480422",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gC5tBV1b2itKkIZb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "=New Personlized emails {{ $today.format('dd/LL/yy') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -240,
+        20
+      ],
+      "id": "5e35758c-5455-408b-9c5d-ab93ce5f04f1",
+      "name": "Create Sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Create Sheet1').item.json.spreadsheetId }}/values/Sheet1!A:Z:append?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\"Subject\",\"Personalized First Line\",\"Offer\",\"callToAction\",\"ps\",\"emailAddress\"]\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -40,
+        20
+      ],
+      "id": "bc5412bc-22b9-4bed-ae9b-f00a1757a719",
+      "name": "Put headers in Personalized Email Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0fd2f5d1-4a38-49f1-891d-68a24744886d",
+              "name": "First Name",
+              "value": "={{ $json.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "e8743bf0-096e-415d-98b9-ee242fcdcb28",
+              "name": "Last Name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "214a5ec3-e331-48bf-812a-3fc333e99f90",
+              "name": "Linkedin URL",
+              "value": "={{ $json.linkedin_url }}",
+              "type": "string"
+            },
+            {
+              "id": "cc36a740-17a1-4a52-9b20-f4940f30b3e7",
+              "name": "Title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "da666ce2-8aff-4096-ac1e-ab6f0f344fe6",
+              "name": "Email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "57e6bc41-7e19-4e31-b9bc-d19063620501",
+              "name": "Country",
+              "value": "={{ $json.country }}",
+              "type": "string"
+            },
+            {
+              "id": "a190b499-5b58-4b76-a1ff-3ac51069c064",
+              "name": "Company Name",
+              "value": "={{ $json.organization.name }}",
+              "type": "string"
+            },
+            {
+              "id": "86d1618f-704a-4537-8a19-90cfd4710036",
+              "name": "Company LinkedIn",
+              "value": "={{ $json.organization.linkedin_url }}",
+              "type": "string"
+            },
+            {
+              "id": "84d5081d-c63d-429e-95dc-fcaa0b1bf280",
+              "name": "Company Website",
+              "value": "={{ $json.organization.website_url }}",
+              "type": "string"
+            },
+            {
+              "id": "9a32b522-f6f0-45ec-8b2e-4928987a8f85",
+              "name": "Company Founded Year",
+              "value": "={{ $json.organization_founded_year }}",
+              "type": "string"
+            },
+            {
+              "id": "9c501864-bbd4-4ca2-8c02-cb63da4f471d",
+              "name": "Linkedin Headline",
+              "value": "={{ $json.headline }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1400,
+        20
+      ],
+      "id": "36908b5b-734c-40ed-a9bc-1f270c355d09",
+      "name": "Set Scraped Info"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3e759fe9-b34d-43ff-b23f-5d79d3dba2c9",
+              "leftValue": "={{ $json.first_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -780,
+        20
+      ],
+      "id": "a9607c4e-7aac-49f6-8d47-3b9ba2ffc7d1",
+      "name": "Only Pass throught once Both Routes Have finished processing"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        20
+      ],
+      "id": "71104a2b-c410-4e1f-a794-904eaac634cc",
+      "name": "Aggregate to 1 item"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        180
+      ],
+      "id": "b129b692-d635-4797-ac42-31404d1ec6c6",
+      "name": "Wait1",
+      "webhookId": "cbf1ad58-5ab2-4cc7-a8e6-fa211ae17247"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c134e2ce-2f78-4d77-8769-305ef2db5114",
+              "leftValue": "={{ $json.linkedin_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        920,
+        60
+      ],
+      "id": "9d50f401-d07f-4f7c-9de8-287c957a5571",
+      "name": "Personal LinkedIn Exists?"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        860,
+        -140
+      ],
+      "id": "afa8554e-c8a2-4c83-b3e9-7961aa3ec7c6",
+      "name": "Only Pass trough 1 item"
+    },
+    {
+      "parameters": {
+        "formId": "jV4cFuS4"
+      },
+      "type": "n8n-nodes-base.typeformTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -2560,
+        0
+      ],
+      "id": "36e91f4b-12f8-48ce-9635-62a50ac18039",
+      "name": "Typeform Trigger",
+      "webhookId": "dc3cf5b4-7745-4a1f-a61a-c748545f09e7",
+      "credentials": {
+        "typeformApi": {
+          "id": "k3lIPnan7nNg1LHz",
+          "name": "Typeform account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Watches Typeform.com for submitted forms\n\nQuestion I used: \n\n\"What Apollo Link Do You Want To Use?\"\n\nOptional Question: \n\n\"How many Leads do you want to scrape? (Minimum 500)\"",
+        "height": 520,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2660,
+        -260
+      ],
+      "typeVersion": 1,
+      "id": "25c1fe81-d7ea-467d-b217-fc7ca0879ac3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### Maps (gets) data from Typeform node and scrapes Apollo.io via this Apify Scraper:\n\nhttps://console.apify.com/actors/jljBwyyQakqrL1wae\n\n\nOptional (if you specify Amount of Leads in Tyeform: \n\nUnder \"totalRecords\" in this node replace \"500\" with the dynamic field outputted by the Typeform node so that the amount of leads you want to scrape changes with the number you submit in your Typeform",
+        "height": 520,
+        "width": 380
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2260,
+        -260
+      ],
+      "typeVersion": 1,
+      "id": "5f319a48-beac-475a-ae80-005db4a72b86",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Get Scraped Data from Apify and add it nicely into a Google Sheet",
+        "height": 520,
+        "width": 1220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1780,
+        -260
+      ],
+      "typeVersion": 1,
+      "id": "de279ab9-45d0-45d8-b127-c7b99ae47106",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Create a new Google Sheet for the Personalized Emails to go in",
+        "height": 520,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -300,
+        -260
+      ],
+      "typeVersion": 1,
+      "id": "9e03beb2-1bdd-4a3b-b820-f9b7ca3435a4",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Process each lead/prospect individually with their data gathered from the Apify.com Apollo scaper and use ChatGPT (OpenAI) to create a personalized email using the email structure provided in the prompt. \n\n## Places the email for each lead/prospect into the newly created sheet in the previous section",
+        "height": 760,
+        "width": 2020
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        240,
+        -360
+      ],
+      "typeVersion": 1,
+      "id": "03322608-7ddf-4597-a531-54ada4c4358e",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Sends email to you once everything has finished",
+        "height": 200,
+        "width": 500,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        780,
+        -180
+      ],
+      "typeVersion": 1,
+      "id": "2d84e38c-fba7-4bea-823e-3deadf68c469",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Put headers in Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Add Lead Data to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Only Pass trough 1 item",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Personal LinkedIn Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create email": {
+      "main": [
+        [
+          {
+            "node": "Add Custom Email to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Lead Data to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Only Pass throught once Both Routes Have finished processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sheet": {
+      "main": [
+        [
+          {
+            "node": "Put headers in Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Item = 1 ": {
+      "main": [
+        [
+          {
+            "node": "Create Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Scraped Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Apify Scraper for Apollo": {
+      "main": [
+        [
+          {
+            "node": "If Item = 1 ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Custom Email to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sheet1": {
+      "main": [
+        [
+          {
+            "node": "Put headers in Personalized Email Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Put headers in Personalized Email Sheet": {
+      "main": [
+        [
+          {
+            "node": "Get Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Scraped Info": {
+      "main": [
+        [
+          {
+            "node": "Add Lead Data to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Pass throught once Both Routes Have finished processing": {
+      "main": [
+        [
+          {
+            "node": "Aggregate to 1 item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate to 1 item": {
+      "main": [
+        [
+          {
+            "node": "Create Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personal LinkedIn Exists?": {
+      "main": [
+        [
+          {
+            "node": "Create email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Pass trough 1 item": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Typeform Trigger": {
+      "main": [
+        [
+          {
+            "node": "Run Apify Scraper for Apollo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b4cf23aa-5008-4d6c-ae81-abeb1c293121",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eae46237f0b03e1e21495b9d127d17ad71e5e7504c7d7b1084f9a3d34657c561"
+  },
+  "id": "W01nurwfMxKpa12M",
+  "tags": []
+}
