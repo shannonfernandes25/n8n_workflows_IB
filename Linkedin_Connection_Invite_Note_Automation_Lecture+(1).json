@@ -1,0 +1,740 @@
+{
+  "name": "Linkedin Connection Invite Note Automation Lecture",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        105
+      ],
+      "id": "ef599deb-af0e-4fd3-8498-1b6018a7bf0f",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1b4Ps6vneKcG2Ib8QKbwbF3Ya52DDQPUPmM2pwXDOih8",
+          "mode": "list",
+          "cachedResultName": "Automate Linkedin Connection Req with Personalised Note",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b4Ps6vneKcG2Ib8QKbwbF3Ya52DDQPUPmM2pwXDOih8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b4Ps6vneKcG2Ib8QKbwbF3Ya52DDQPUPmM2pwXDOih8/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Linkedin Connection Sent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        105
+      ],
+      "id": "ca769442-f02a-4c82-8190-fd83e09c6894",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "linkedinUrl": "={{ $json['Linkedin Url'] }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-browserflow.browserflow",
+      "typeVersion": 1,
+      "position": [
+        660,
+        -20
+      ],
+      "id": "7a710d80-58bb-478a-8fb9-daaa3e85599b",
+      "name": "Browserflow",
+      "credentials": {
+        "browserflowApi": {
+          "id": "x6zGIz3JRBuleeoP",
+          "name": "Browserflow account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba45ecfa-ae92-40fa-9ea8-9577f2cf6b28",
+              "leftValue": "={{ $json.is_connection }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "93ad6d9e-4764-4796-9a89-43cd00f9271a",
+              "leftValue": "={{ $json.is_pending }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -20
+      ],
+      "id": "2f965c55-4696-4f5d-a0bd-00aa75866a77",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "getProfileData",
+        "linkedinUrl": "={{ $('Google Sheets').item.json['Linkedin Url'] }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-browserflow.browserflow",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -20
+      ],
+      "id": "6fb48ab4-1161-4173-b37a-64808bd162a6",
+      "name": "Browserflow1",
+      "credentials": {
+        "browserflowApi": {
+          "id": "x6zGIz3JRBuleeoP",
+          "name": "Browserflow account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<input>\nName: {{ $json.data.name }}\nLinkedin Bio: {{ $json.data.about }}\nLinkedin Tagline: {{ $json.data.tagline }}\nMost recent experience: {{ $json.data.experience[0].company_name }} as {{ $json.data.experience[0].job_title }}\n</input>\n\nCreate a personalized LinkedIn connection request message that:\n\n- Mentions a specific detail from the recipient's profile (position, company, recent achievement).\n- Identifies a genuine common interest or industry connection related to AI and automation.\n- Provides a clear reason for connecting, emphasizing the value of exchanging ideas.\n- Keeps the message concise (under 250 characters).\n- Uses a warm, professional tone without generic language or obvious sales pitches.\n- Ends with a simple closing.\n\n\nExample Output Format:\n\n'Hi {{ $json.data.name }},\n\nI see you're with {{ $json.data.experience[0].company_name }}! As you're passionate about AI and automation, I’d love to connect and exchange ideas. I believe we could learn a lot from each other.\n\nLooking forward to it!\n\nBest, \nManthan'\n\n\n- Use only first name of the lead\n- Use only company name and not full-time/part-time/remote/hybrid\n- Always end with Manthan (MY NAME)",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You create short, concise and accurate LinkedIn connection messages. Your messages should sound natural, warm and professional. Always reference specific details from a person's profile to show genuine interest. Identify common interests, mutual connections, or industry overlaps when possible. Keep messages under 300 characters to respect LinkedIn's limitations. Avoid generic phrases like \"I'd like to add you to my network\" or any obvious sales language. Each message should provide a clear reason for connecting and suggest mutual value. Make the recipient feel that accepting the request would be beneficial to them professionally. Never use overly formal language, jargon, or clichés. Your tone should be friendly but business-appropriate - like a brief note you'd write to a respected colleague you're meeting for the first time at a professional conference."
+            },
+            {
+              "type": "AIMessagePromptTemplate",
+              "message": "=Hi {{ $json.data.name }},\n\nI see you're with {{ $json.data.experience[0].company_name }}! As you're passionate about AI and automation, I’d love to connect and exchange ideas. I believe we could learn a lot from each other.\n\nLooking forward to it!\n\nBest, \nManthan"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1320,
+        -20
+      ],
+      "id": "7229409a-72e8-4970-9b7e-52e191a3e0c4",
+      "name": "Note Message (Personalised)"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1408,
+        200
+      ],
+      "id": "98104e4f-27c8-45ac-9b15-be0a7c2898d6",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "9WpWmiE8A7Gl3BYM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendConnectionInvite",
+        "linkedinUrl": "={{ $('Google Sheets').item.json['Linkedin Url'] }}",
+        "addMessage": true,
+        "message": "={{ $json.text }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-browserflow.browserflow",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        -20
+      ],
+      "id": "c4b4563e-a3df-4342-902f-5f23f6821acf",
+      "name": "Browserflow2",
+      "credentials": {
+        "browserflowApi": {
+          "id": "x6zGIz3JRBuleeoP",
+          "name": "Browserflow account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        440,
+        105
+      ],
+      "id": "25f1d6b7-ca96-41c5-a29c-91b77a285589",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 50
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2136,
+        105
+      ],
+      "id": "8cf22d2a-cf50-4612-975c-5f8cd69d77a3",
+      "name": "Wait",
+      "webhookId": "42c02e22-a469-41a4-ab9a-c647ff921272"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1b4Ps6vneKcG2Ib8QKbwbF3Ya52DDQPUPmM2pwXDOih8",
+          "mode": "list",
+          "cachedResultName": "Automate Linkedin Connection Req with Personalised Note",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b4Ps6vneKcG2Ib8QKbwbF3Ya52DDQPUPmM2pwXDOih8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b4Ps6vneKcG2Ib8QKbwbF3Ya52DDQPUPmM2pwXDOih8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Linkedin Url": "{{ $('Google Sheets').item.json['Linkedin Url'] }}",
+            "Linkedin Connection Sent": "YES"
+          },
+          "matchingColumns": [
+            "Linkedin Url"
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Linkedin Url",
+              "displayName": "Linkedin Url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Linkedin Connection Sent",
+              "displayName": "Linkedin Connection Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1916,
+        -20
+      ],
+      "id": "6918e014-eaff-41bf-b569-0695ed31606b",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BABF9fd2GiPmlycd",
+          "name": "Google Sheets Cred"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Google Sheets": [
+      {
+        "json": {
+          "row_number": 2,
+          "First Name": "Manthan",
+          "Last Name": "Patel",
+          "Linkedin Url": "https://www.linkedin.com/in/manthanleadgenman/",
+          "Linkedin Connection Sent": ""
+        }
+      },
+      {
+        "json": {
+          "row_number": 3,
+          "First Name": "Suprava",
+          "Last Name": "Sabat",
+          "Linkedin Url": "https://www.linkedin.com/in/suprava-sabat-saasleadgen/",
+          "Linkedin Connection Sent": ""
+        }
+      },
+      {
+        "json": {
+          "row_number": 4,
+          "First Name": "Divyanshi",
+          "Last Name": "Sharma",
+          "Linkedin Url": "https://www.linkedin.com/in/divyanshis-saasleadgen/",
+          "Linkedin Connection Sent": ""
+        }
+      }
+    ],
+    "Browserflow": [
+      {
+        "json": {
+          "sessionId": "df758b1b266051fac9d9cadc4c072f01",
+          "is_connection": false,
+          "is_pending": false,
+          "message": "Successfully checked connection status; You are not connected",
+          "image_url": "https://app.browserflow.io/session/df758b1b266051fac9d9cadc4c072f01/screenshot/1745458367.png",
+          "credits_used": 5
+        }
+      },
+      {
+        "json": {
+          "sessionId": "50b091043f68705dfa91d882d602a4eb",
+          "is_connection": false,
+          "is_pending": false,
+          "message": "Successfully checked connection status; You are not connected",
+          "image_url": "https://app.browserflow.io/session/50b091043f68705dfa91d882d602a4eb/screenshot/1745458367.png",
+          "credits_used": 5
+        }
+      },
+      {
+        "json": {
+          "sessionId": "f4c3428440a1572129d740f14bda4498",
+          "is_connection": false,
+          "is_pending": false,
+          "message": "Successfully checked connection status; You are not connected",
+          "image_url": "https://app.browserflow.io/session/f4c3428440a1572129d740f14bda4498/screenshot/1745458368.png",
+          "credits_used": 5
+        }
+      }
+    ],
+    "Browserflow1": [
+      {
+        "json": {
+          "sessionId": "b1ee213754d48e358b2613604b7481a4",
+          "data": {
+            "url": "https://www.linkedin.com/in/manthanleadgenman/",
+            "name": "Manthan Patel",
+            "about": "Hi, I'm Manthan.\n\nFor my TL;DR people:\nI help entrepreneurs, business owners, and students transform their businesses with my courses around AI agents and automation into profitable ventures for the future. I post stories, actionable tips, life lessons, failures, and everything I experience along the way. It's a journey you will want to be part of!\n\nHere's the extended version, lol:\nI create courses about AI. Here, I share everything I know when it comes to automation, agency monetization, marketing, and life lessons. I'm real with everything I do online; nothing is sugar-coated.\n\nI've a bachelor's degree in computer science and technology.\nI've built a following of over 100,000+ across all of my course platforms.\nI've generated over $63,000 in revenue from courses in 11 months.\nI've also worked with many YC-backed companies and MNCs like Vectorshift AI, Persana AI, Saleshandy, Invideo AI, and Newoaks AI, to name a few.\nI've been a panel speaker at the international event AInsights360.\nI've won a national level hackathon at Microsoft Azure Development League.\n\nYou can find my courses here: https://www.udemy.com/user/manthan-patel-4/\n\nLearn from me; grow with me.\n…see more",
+            "tagline": "I teach AI Agents and Lead Gen | Lead Gen Man(than) | 100K+ students",
+            "picture": "https://media.licdn.com/dms/image/v2/D4D03AQHHlhPHnLMxCQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1728218248101?e=1750896000&v=beta&t=E5qwBxTiTM3dBuIPWe3HnUH80kptFWWVQlGxEQlBew4",
+            "skills": [
+              "Founder @ VectorShift(YC): No-Code AI Platform | Ex-McKinsey | Statistics @ Harvard"
+            ],
+            "location": "Ahmedabad, Gujarat, India",
+            "education": [
+              {
+                "institution_logo": "https://media.licdn.com/dms/image/v2/C4D0BAQGLfxRtGWMRPg/company-logo_100_100/company-logo_100_100/0/1630561425087?e=1750896000&v=beta&t=YK-peaxoCuVzGNWe_2cSYBKWZeHz6ky8L-LCq3eK_6k",
+                "institution_url": "https://www.linkedin.com/company/49107589/",
+                "institution_name": "Self-educated",
+                "education_description": null,
+                "education_duration": null
+              },
+              {
+                "institution_logo": "https://media.licdn.com/dms/image/v2/C510BAQHckPx_aapn0A/company-logo_100_100/company-logo_100_100/0/1630567802716/ahmedabaduniversity_logo?e=1750896000&v=beta&t=1bTOrNuTi6LUdXXq3-n5PHBIyE34mBep-s1eqa6141Q",
+                "institution_url": "https://www.linkedin.com/company/1304758/",
+                "institution_name": "Ahmedabad University",
+                "education_description": "Bachelor's degree, Computer Science",
+                "education_duration": "2020 - 2024"
+              }
+            ],
+            "experience": [
+              {
+                "company_logo": "https://media.licdn.com/dms/image/v2/D4D0BAQH2vbc44uexHg/company-logo_100_100/company-logo_100_100/0/1720096752155/acquisitionxpro_logo?e=1750896000&v=beta&t=36q__nZ95EQ5jxfm_IOrBMYUmVYWM0B3RH3wUuQkuMQ",
+                "company_linkedin_url": "https://www.linkedin.com/company/101349439/",
+                "job_title": "GTM Partner",
+                "company_name": "AcquisitionX · Full-time",
+                "employment_duration": "Mar 2025 - Present · 2 mos",
+                "location": "Mar 2025 - Present · 2 mos"
+              },
+              {
+                "company_logo": "https://media.licdn.com/dms/image/v2/D4D0BAQFUJ65HNdidrw/company-logo_100_100/B4DZU401sMHYAY-/0/1740415130919/maildoso_logo?e=1750896000&v=beta&t=a1BYXepuspS6JbT4SBhuVYsbFFR6jAfI3lm1YtTxsxY",
+                "company_linkedin_url": "https://www.linkedin.com/company/100304536/",
+                "job_title": "Strategic Advisor",
+                "company_name": "Maildoso",
+                "employment_duration": "Mar 2025 - Present · 2 mos",
+                "location": "Remote"
+              },
+              {
+                "company_logo": null,
+                "company_linkedin_url": "https://www.linkedin.com/search/results/all/?keywords=Self-employed",
+                "job_title": "Course Instructor",
+                "company_name": "Self-employed",
+                "employment_duration": "Jan 2024 - Present · 1 yr 4 mos",
+                "location": "Jan 2024 - Present · 1 yr 4 mos"
+              }
+            ],
+            "Activity": [
+              {
+                "activity_type": "post",
+                "description": null
+              },
+              {
+                "activity_type": "post",
+                "description": null
+              }
+            ],
+            "contact_info": {
+              "email": null,
+              "phone_number": null,
+              "github": null,
+              "facebook_url": null,
+              "instagram_url": null,
+              "website": "http://www.leadgenman.com"
+            }
+          },
+          "message": "Succesfully Scraped Information",
+          "image_url": "https://app.browserflow.io/session/b1ee213754d48e358b2613604b7481a4/screenshot/1745458607.png",
+          "credits_used": 50
+        }
+      },
+      {
+        "json": {
+          "sessionId": "166e908246e8dc2bd13b6e49a1009eee",
+          "data": {
+            "url": "https://www.linkedin.com/in/suprava-sabat-saasleadgen/",
+            "name": "Suprava Sabat",
+            "about": "At AcquisitionX, we build lead-gen systems that work in 2025.\n\nWe focus on having multichannel systems for our clients!\n\nProblems We Tackle:\n\n- Inconsistent lead quality.\n- Time-consuming manual processes.\n- High CPAs on paid channels.\n\nSolutions We Offer:\n\n- Faster go-to-market\n- Community building\n- Personal branding\n- High-converting acquisition funnels\n- A guarantee to reduce CPAs\n- Strategic audience segmentation for targeted outreach\n- Integrated AI-driven automation for streamlined operations\n- Advanced CRO techniques to keep you cutting-edge.\n\nWho can benefit:\n\n- B2B SAAS companies\n- B2B service-based business\n\nBook a call with us here: https://calendly.com/acquisitionxsuprava/discovery\n…see more",
+            "tagline": "Co-Founder @AcquisitionX",
+            "picture": "https://media.licdn.com/dms/image/v2/D5603AQHQEkHaHrDgvg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1692859740080?e=1750896000&v=beta&t=NCcqc0uQlH9qYN6fXwAW1ZF5GITwSWXiPiXxdy4jLQQ",
+            "skills": [
+              "Lead Generation",
+              "Customer Acquisition",
+              "Product Marketing",
+              "B2B Marketing",
+              "Outbound Marketing"
+            ],
+            "location": "San Francisco, California, United States",
+            "current_company": "AcquisitionX",
+            "education": [],
+            "experience": [
+              {
+                "company_logo": "https://media.licdn.com/dms/image/v2/D4D0BAQH2vbc44uexHg/company-logo_100_100/company-logo_100_100/0/1720096752155/acquisitionxpro_logo?e=1750896000&v=beta&t=36q__nZ95EQ5jxfm_IOrBMYUmVYWM0B3RH3wUuQkuMQ",
+                "company_linkedin_url": "https://www.linkedin.com/company/101349439/",
+                "job_title": "AcquisitionX",
+                "company_name": "Full-time · 1 yr 7 mos",
+                "employment_duration": "United States",
+                "location": "United States"
+              },
+              {
+                "company_logo": "https://media.licdn.com/dms/image/v2/C4E0BAQH3nUDO57s78A/company-logo_100_100/company-logo_100_100/0/1631370638108/indpendent_contractor_logo?e=1750896000&v=beta&t=o0zdVfnzMqvs_wKHFtdLULKJbAWnRUia96xq9-oIkCY",
+                "company_linkedin_url": "https://www.linkedin.com/company/33200573/",
+                "job_title": "Self Employed",
+                "company_name": "Freelance · 6 yrs 11 mos",
+                "employment_duration": "Feb 2017 - Dec 2023 · 6 yrs 11 mos",
+                "location": "Remote"
+              }
+            ],
+            "Activity": [
+              {
+                "activity_type": "post",
+                "description": null
+              },
+              {
+                "activity_type": "post",
+                "description": null
+              }
+            ],
+            "contact_info": {
+              "email": "jssuprava02@gmail.com",
+              "phone_number": null,
+              "github": null,
+              "facebook_url": null,
+              "instagram_url": null,
+              "website": null
+            }
+          },
+          "message": "Succesfully Scraped Information",
+          "image_url": "https://app.browserflow.io/session/166e908246e8dc2bd13b6e49a1009eee/screenshot/1745458604.png",
+          "credits_used": 50
+        }
+      },
+      {
+        "json": {
+          "sessionId": "b55b419c2dfcf31e624c13fb7d5c0bc9",
+          "data": {
+            "url": "https://www.linkedin.com/in/divyanshis-saasleadgen/",
+            "name": "Divyanshi Sharma",
+            "about": "At Acquisition, we build lead-gen systems that work in 2024.\n\nWe focus on having multichannel systems for our clients!\n\nProblems We Tackle:\n\n- Inconsistent lead quality.\n- Time-consuming manual processes.\n- High CPAs on paid channels.\n\nSolutions We Offer:\n\n- Faster go-to-market\n- Community building\n- Personal branding\n- High-converting acquisition funnels\n- A guarantee to reduce CPAs\n- Strategic audience segmentation for targeted outreach\n- Integrated Al-driven automation for streamlined operations\n- Advanced CRO techniques to keep you cutting-edge.\n\nWho can benefit:\n\n- B2B SAAS companies\n- B2B service-based business\n…see more",
+            "tagline": "Co-Founder @AcquisitionX",
+            "picture": "https://media.licdn.com/dms/image/v2/D4D03AQEURyQBRjrvSQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1691938389426?e=1750896000&v=beta&t=JdhrQz-EA9y6Rv7Vuf-55GsdO6P5cU_o7TzEm9ICzZI",
+            "skills": [
+              "SaaS Sales",
+              "B2B Marketing",
+              "Lead Generation",
+              "Client acquisition",
+              "B2b lead generation"
+            ],
+            "location": "New York, New York, United States",
+            "education": [],
+            "experience": [
+              {
+                "company_logo": "https://media.licdn.com/dms/image/v2/D4D0BAQH2vbc44uexHg/company-logo_100_100/company-logo_100_100/0/1720096752155/acquisitionxpro_logo?e=1750896000&v=beta&t=36q__nZ95EQ5jxfm_IOrBMYUmVYWM0B3RH3wUuQkuMQ",
+                "company_linkedin_url": "https://www.linkedin.com/company/101349439/",
+                "job_title": "Co-Founder",
+                "company_name": "AcquisitionX · Full-time",
+                "employment_duration": "Oct 2023 - Present · 1 yr 7 mos",
+                "location": "United States · Remote"
+              },
+              {
+                "company_logo": null,
+                "company_linkedin_url": "https://www.linkedin.com/search/results/all/?keywords=Freelance",
+                "job_title": "Social Media Manager",
+                "company_name": "Freelance",
+                "employment_duration": "Jan 2022 - Dec 2023 · 2 yrs",
+                "location": "Jan 2022 - Dec 2023 · 2 yrs"
+              },
+              {
+                "company_logo": null,
+                "company_linkedin_url": "https://www.linkedin.com/search/results/all/?keywords=www%2Echildrenscommunity%2Ein",
+                "job_title": "Content Writer",
+                "company_name": "www.childrenscommunity.in · Freelance",
+                "employment_duration": "Jul 2020 - Sep 2020 · 3 mos",
+                "location": "Jul 2020 - Sep 2020 · 3 mos"
+              }
+            ],
+            "Activity": [
+              {
+                "activity_type": "post",
+                "description": "I spent the last 2 weeks breaking down..\n\nhow to do cold emailing in 2025 and made this ultimate cheatsheet.\n\nCold Emailing in 2025\n\nIt is not dead — and if others feel it is dead, ain’t this your edge?\n\nCold emailing started with “<name> — thoughts?”\n\nWell, it has evolved far from there.\n\nBut once you put this cold email cheatsheet into action, here’s what you open your gates to:\n\n✅ A high-quality cold emailing funnel that gets you 15–30 quality appointments per month\n\n✅ Get inside the inbox of your fav decision-maker\n\n✅ Replies that aren’t “unsubscribe” or “take me off your list”\n\n✅ Better leads, better targeting, and less time wasted\n\n✅ A system that feels scalable but reads human\n\nIt’s pretty amazing what cold emailing can help you achieve once you tap into the strategies others aren’t doing!!\n\nIn this cheatsheet, I’ve documented EVERYTHING you need to master cold emailing, including:\n\n→ How to send cold emails at scale without sounding spammy\n\n→ Creating cold email copy that gets replies (and why psychology matters)\n\n→ Setting up an automated newsletter system that does the work for you\n\n→ Getting newsletter subscribers even if you’re not a big brand\n\n→ Converting readers into appointments and clients\n\n→ Creating irresistible small offers to keep them coming back\n\nAnd much more. From basics to advanced — everything in one guide.\n\nMy friend said I should sell this as a course.\n\nNah — I’ll just share it.\n\nHere’s a glimpse of it on how to setup an automated email infrastructure👇\n\nEven if you have your copies figured out…\nThey are wasted if they land in spam!\n\n✅solves this for you AND automates it!\n\n-Handles SPF, DKIM, DMARC automatically\n\n-Avoids bounce, spam & blacklist risk\n\n-Gets us 93%+ email deliverability\n\n-Monitors inboxes daily for reputation\n\nIf you’re still doing all of this manually, you’re losing time and deliverability!"
+              },
+              {
+                "activity_type": "post",
+                "description": "I scraped top Substack posts in the marketing niche 👇\n\n→ Agent summarizes common pain points\n\n→ Auto-builds an outbound campaign around those pains\n1,000x better than keyword research\n\nHere’s the step-by-step playbook to build it!"
+              }
+            ],
+            "contact_info": {
+              "email": "divyanshi@acquisitionx.pro",
+              "phone_number": null,
+              "github": null,
+              "facebook_url": null,
+              "instagram_url": null,
+              "website": null
+            }
+          },
+          "message": "Succesfully Scraped Information",
+          "image_url": "https://app.browserflow.io/session/b55b419c2dfcf31e624c13fb7d5c0bc9/screenshot/1745458604.png",
+          "credits_used": 50
+        }
+      }
+    ],
+    "Note Message (Personalised)": [
+      {
+        "json": {
+          "text": "Hi Manthan,\n\nI admire your work at AcquisitionX and your courses on AI agents. With our shared interest in automation, I’d love to connect and exchange insights. It’d be great to learn from each other's experiences!\n\nLooking forward to connecting!\n\nBest,  \nManthan"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Browserflow": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Browserflow1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Browserflow1": {
+      "main": [
+        [
+          {
+            "node": "Note Message (Personalised)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Note Message (Personalised)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Note Message (Personalised)": {
+      "main": [
+        [
+          {
+            "node": "Browserflow2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Browserflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Browserflow2": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0beeb7f9-79e4-454b-9081-b649ebb914e0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eae46237f0b03e1e21495b9d127d17ad71e5e7504c7d7b1084f9a3d34657c561"
+  },
+  "id": "Sc5V9GpWryNf7TxZ",
+  "tags": []
+}
