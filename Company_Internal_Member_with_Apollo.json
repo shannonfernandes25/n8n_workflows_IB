@@ -1,0 +1,530 @@
+{
+  "name": "Company Internal Member with Apollo",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        260
+      ],
+      "id": "d4d83fed-5984-447f-ba74-f03794a18b32"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1j49tYX_wcrbUAhtLHm__uAncWdZoY3T6beWTULEXddY",
+          "mode": "list",
+          "cachedResultName": "Company Insider",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j49tYX_wcrbUAhtLHm__uAncWdZoY3T6beWTULEXddY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j49tYX_wcrbUAhtLHm__uAncWdZoY3T6beWTULEXddY/edit#gid=0"
+        },
+        "options": {}
+      },
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        180,
+        260
+      ],
+      "id": "2cdb1887-be0b-41ce-84b3-a88956a126f2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "92m9ZKZ0tMn1UehP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Data preparation\nconst items = $input.all();\n\nreturn items.map(item => {\n  const emailAddress = item.json[\"Email Address\"];\n  const domain = emailAddress.substring(emailAddress.indexOf('@') + 1);\n  \n  return {\n    json: {\n      first_name: item.json[\"First Name\"],\n      last_name: item.json[\"Last Name\"],\n      email_addresses: [{\n        email_address: emailAddress\n      }],\n      domain: domain\n    }\n  };\n});"
+      },
+      "name": "Data Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        260
+      ],
+      "id": "ec91e19b-7711-4c3f-8cf9-3e6b6644a205"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please identify 2-3 key decision-makers from the company domain {{ $json.domain }} who match my ideal prospect criteria.\n\nEXCLUDE:\n- {{ $json.first_name }} {{ $json.last_name }} (already in our database)\n\nINCLUDE ONLY:\n- Director-level positions and above\n- C-suite executives (CEO, CRO, COO, CTO, CMO)\n- Department heads or VPs in Growth, Marketing, or Sales\n- Founders or Co-founders\n\nFor each person found, please provide:\n- Full name\n- Specific job title\n- LinkedIn profile URL (if available)\n- Email pattern prediction based on company domain structure\n\nIMPORTANT: Focus on finding the MOST SENIOR contacts in these departments, as they have decision-making authority.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a specialized B2B prospecting assistant with expertise in identifying high-value decision-makers at target companies.\n\nYour primary function is to identify senior-level contacts (Director and above) who:\n1. Have budget authority or significant influence on purchasing decisions\n2. Work specifically in Growth, Marketing, Sales departments or hold C-suite positions\n3. Match standard B2B ideal customer profiles for SaaS sales\n\nWhen using the People Search tool:\n- Always search for specific titles like \"VP of Marketing,\" \"Chief Revenue Officer,\" \"Director of Growth\"\n- Prioritize finding the MOST SENIOR person in each relevant department\n- Filter results to exclude non-decision makers and focus on people with purchasing authority\n- Ensure results are relevant to B2B SaaS sales contexts\n- Return only high-quality prospects who match executive or senior leadership criteria\n\nFormat your responses in a consistent, structured way that will be easy to process for email outreach and LinkedIn campaigns."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        600,
+        260
+      ],
+      "id": "28b2e451-b456-4c83-9a6a-0b0c2e3de94c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        420,
+        500
+      ],
+      "id": "337c6629-603c-4ea4-b766-6d07ff84215c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "bA8PFU70HFgHvDOA",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "You are a specialized B2B prospecting assistant with expertise in identifying high-value decision-makers at target companies.\n\nYour primary function is to identify senior-level contacts (Director and above) who:\n1. Have budget authority or significant influence on purchasing decisions\n2. Work specifically in Growth, Marketing, Sales departments or hold C-suite positions\n3. Match standard B2B ideal customer profiles for SaaS sales\n\nWhen using the People Search tool:\n- Always search for specific titles like \"VP of Marketing,\" \"Chief Revenue Officer,\" \"Director of Growth\"\n- Prioritize finding the MOST SENIOR person in each relevant department\n- Filter results to exclude non-decision makers and focus on people with purchasing authority\n- Ensure results are relevant to B2B SaaS sales contexts\n- Return only high-quality prospects who match executive or senior leadership criteria\n\nFormat your responses in a consistent, structured way that will be easy to process for email outreach and LinkedIn campaigns.",
+        "method": "POST",
+        "url": "ttps://api.apollo.io/api/v1/mixed_people/search",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "person_titles[]",
+              "valueProvider": "fieldValue",
+              "value": "{job_title}"
+            },
+            {
+              "name": "q_organization_domains",
+              "valueProvider": "fieldValue",
+              "value": "{placeholder}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "parametersHeaders": {
+          "values": [
+            {
+              "name": "Cache-Control",
+              "valueProvider": "fieldValue",
+              "value": "no-cache"
+            },
+            {
+              "name": "accept",
+              "valueProvider": "fieldValue",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "valueProvider": "fieldValue",
+              "value": "qdAMpYJtTVmlxcafHs2dvw"
+            }
+          ]
+        },
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "{job_title}",
+              "description": "Add a job title here for example Head of Growth",
+              "type": "string"
+            },
+            {
+              "name": "{placeholder}",
+              "description": "=Add the domain of the company which you can get from their email {{ $json.email_addresses[0].email_address }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        520
+      ],
+      "id": "dc9da08e-f363-4a14-906c-a01e44c2502c",
+      "name": "People Search"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"people\": [\n    {\n      \"full name\": \"Manthan Patel\",\n      \"LinkedIn URL\": \"https://www.linkedin.com/in/manthanleadgenman/\",\n      \"job title\": \"CEO\",\n      \"email\": \"manthan@leadgenman.com\",\n      \"domain\": \"leadgenman.com\"\n    },\n    {\n      \"full name\": \"Suprava Sabat\",\n      \"LinkedIn URL\": \"https://www.linkedin.com/in/suprava-sabat-saasleadgen/\",\n      \"job title\": \"Co-founder\",\n      \"email\": \"suprava.s@acquisitionx.pro\",\n      \"domain\": \"acquisitionx.pro\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        920,
+        500
+      ],
+      "id": "7e4fdd5d-d200-491d-8634-d222f1db4de7",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This single node combines the functionality of Split Out1, Edit Fields1, and Code1 nodes\nconst items = $input.all();\n\n// Process each item from the input\nconst results = [];\n\n// First, check if we're getting output from AI with people structure\nitems.forEach(item => {\n  // Handle the Split Out1 functionality - extract people from output if it exists\n  const peopleArray = item.json?.output?.people || [item.json];\n  \n  // Process each person in the array\n  peopleArray.forEach(person => {\n    // Extract the fields we need (Edit Fields1 functionality)\n    const fullName = person['full name'] || '';\n    const linkedinUrl = person['LinkedIn URL'] || '';\n    const jobTitle = person['job title'] || '';\n    const domain = person.domain || '';\n    \n    // Split the full name (Code1 functionality)\n    const nameParts = fullName.split(' ');\n    const firstName = nameParts[0] || '';\n    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';\n    \n    // Return complete processed record\n    results.push({\n      json: {\n        'full name': fullName,\n        'LinkedIn URL': linkedinUrl,\n        'job title': jobTitle,\n        domain: domain,\n        firstName: firstName,\n        lastName: lastName\n      }\n    });\n  });\n});\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        260
+      ],
+      "id": "d5068281-2032-4ebd-95e3-0eb16283254c",
+      "name": "Process People Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.prospeo.io/email-finder",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-KEY",
+              "value": "37b424c561b5ad730f521495476a9573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "first_name",
+              "value": "={{ $json.firstName }}"
+            },
+            {
+              "name": "last_name",
+              "value": "={{ $json.lastName }}"
+            },
+            {
+              "name": "company",
+              "value": "={{ $json.domain }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        260
+      ],
+      "id": "926ae761-c5b4-4955-99f3-94758e858401",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6e43198c-f8c3-4896-9849-9ced513b5cd2",
+              "name": "response.email",
+              "value": "={{ $json.response.email }}",
+              "type": "string"
+            },
+            {
+              "id": "49199ade-d418-4db0-9927-107eef993e3d",
+              "name": "response.first_name",
+              "value": "={{ $json.response.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "944b1a1a-7038-49fa-b745-450e62d34f01",
+              "name": "response.domain",
+              "value": "={{ $json.response.domain }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1680,
+        260
+      ],
+      "id": "fc69efd3-9919-42a2-8b7e-1d058a91e164",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1260,
+        260
+      ],
+      "id": "a8b361fa-563d-4650-88ed-4bf58ab8f83b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1900,
+        260
+      ],
+      "id": "88e34877-73ff-418e-8464-5182799c8faa",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://server.smartlead.ai/api/v1/campaigns/12345/leads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "api_key",
+              "value": "123"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"lead_list\": [\n    {\n      \"first_name\": \"{{ $json.response.first_name }}\",\n      \"email\": \"{{ $json.response.email }}\",\n      \"website\": \"{{ $json.response.domain }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2120,
+        260
+      ],
+      "id": "d025f817-4b2b-4b42-84e2-9b117497ba1b",
+      "name": "Cold Email Campaign"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heyreach.io/api/public/campaign/AddLeadsToCampaign",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "dwAWTd05budmOYB0eAL4bgaERFMvthdEaRqyIAao="
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "text/plain"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"campaignId\": 115122,\n    \"accountLeadPairs\": [\n        {\n            \"linkedInAccountId\": 71043,\n            \"lead\": {\n                \"firstName\": \"{{ $json['first name'] }}\",\n                \"lastName\": \"{{ $json['last name'] }}\",\n                \"location\": \"{{ $json.country }}\",\n                \"summary\": \"{{ $json.title }} @ {{ $json['company name'] }}\",\n                \"companyName\": \"{{ $json['company name'] }}\",\n                \"position\": \"{{ $json.title }}\",\n                \"about\": \"{{ $json['company description'] }}\",\n                \"emailAddress\": \"{{ $json.Emails }}\",\n                \"profileUrl\": \"https://{{ $json['linkedin url'] }}\"\n            }\n        }\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2280,
+        260
+      ],
+      "id": "cdf2311c-a842-49c8-97a6-a7e5681842da",
+      "name": "Linkedin Campaign"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Data Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "People Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Prep": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Process People Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Cold Email Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cold Email Campaign": {
+      "main": [
+        [
+          {
+            "node": "Linkedin Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linkedin Campaign": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process People Data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7170d5c6-291f-4fcd-be3f-43bc8869816b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5a0350d5b2a75cfa1f378f51831e0f1c937d16bb9d4ca2b7dcaed94d1bc0741c"
+  },
+  "id": "z9jxpKz5AMFqpVAB",
+  "tags": []
+}
