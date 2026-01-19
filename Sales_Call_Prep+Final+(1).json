@@ -1,0 +1,851 @@
+{
+  "name": "Sales Call Prep",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        160
+      ],
+      "id": "3eb2dc66-2805-4b52-b86f-d0b8943a90bc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "bA8PFU70HFgHvDOA",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Perplexity_Leads_Research",
+        "description": "Call this tool to analyze information on the web around the company. Send exact company title to this tool",
+        "workflowId": {
+          "__rl": true,
+          "value": "fMqU2xBNtN3m73s8",
+          "mode": "list",
+          "cachedResultName": "Sales Call Prep 3. Perplexity"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        960,
+        160
+      ],
+      "id": "efd24948-53b3-42f4-9a1c-ff51260e9a35",
+      "name": "Perplexity"
+    },
+    {
+      "parameters": {
+        "sendTo": "p42549073@gmail.com",
+        "subject": "Meeting Preparation Report",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1060,
+        -100
+      ],
+      "id": "72d95618-f4c2-4556-81da-725a3a067eb8",
+      "name": "Gmail",
+      "webhookId": "d2051d70-8f9b-4289-adc9-8ae237ece7bd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ayPXwoz9fPCn89Mx",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=## Role\nYou are an intelligent assistant designed to analyze meeting participant information and enrich their data based on their email address. Using the provided full name and email address, perform the following tasks:\n\n- Email domain extraction:\nIdentify and extract the domain name from the email address (everything that follows the @ symbol).\nExample: for jdoe@example.com, the extracted domain is example.com.\n\n- Company identification:\nDeduce the company name from the email domain.\nIf the domain belongs to a generic email provider (examples: gmail.com, yahoo.com, outlook.com), indicate \"Not identifiable\".\nOtherwise, format the company name correctly (example: example.com → Example).\n\n## Expected response format:\n{\n  \"Full Name\": \"John Doe\",\n  \"email\": \"jdoe@example.com\",\n  \"domain\": \"example.com\",\n  \"entreprise\": \"Example\",\n}\n\n\nImportant: the output must be in JSON format without \"\\n\". Do not put quotation marks in the boolean search.\n\n## Data to analyze:\nGuest email: {{ $json.attendees[0].email }}\nGuest name: {{ $json.attendees[0].name }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        240,
+        -100
+      ],
+      "id": "38be786d-1e30-4b43-856b-708fe581b50f",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "bA8PFU70HFgHvDOA",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "events": [
+          "BOOKING_CREATED"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.calTrigger",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        -100
+      ],
+      "id": "c48749e9-7072-45ef-bedb-ad3091526b5b",
+      "name": "Cal.com Trigger",
+      "webhookId": "4471316d-d91c-4045-b879-fe16e4e87a43",
+      "credentials": {
+        "calApi": {
+          "id": "G8oICg3BuYxn5pVe",
+          "name": "Cal account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Full Name : {{ $json.message.content.nom_complet }}\nEmail : {{ $json.message.content.email }}\nDomain : {{ $json.message.content.domaine }}\nEntreprise : {{ $json.message.content.entreprise }}\n",
+        "options": {
+          "systemMessage": "=# Agent Role:\nYou are an agent specialized in lead enrichment to optimize appointments scheduled in the calendar. Your objective is to collect and structure valuable information about each lead from the provided data and tools at your disposal.\n\n## Received Data:\n- Lead's full name\n- Lead's email\n- Company domain name\n- Company name\n\n## Tools at Your Disposal:\n1. **Website Analysis**: Allows extraction of key information from the prospect's website (activity, services, positioning, news, etc.).\n   - Usage: Send the company's domain name to this tool and retrieve the results.\n\n2. **LinkedIn Research**: Helps identify the prospect's LinkedIn profile using the person's name and company.\n   - Usage: Input the person's full name and company name into this tool.\n\n3. **Perplexity**: Retrieves the latest news and insights about the lead's company.\n   - Usage: Search for relevant news and select the most recent and significant ones. You must create the prompt yourself to find the latest news, for example \"latest news (company domain name)\"\n\n## Report Format to Generate:\nThe agent must write a structured and concise report, ready to be sent by email, containing the following information:\n\n🔹 **General Information**\n- Lead name: [Full name]\n- Email: [Email]\n- Company: [Company name]\n- Website: [Domain name]\n- LinkedIn profile: [Profile link] (if found)\n\n🔹 **Company Information**\n- Industry sector: [Domain]\n- Main services: [Summary of services offered]\n- Positioning & differentiation: [What distinguishes the company]\n- Key figures (if available): [Company size, revenue, employees]\n\n🔹 **Latest News**\n- News 1: [Title + summary] + source\n- News 2: [Title + summary] + source\n- News 3: [Title + summary] + source\n\n## Specific Instructions:\n- Ensure you have accurate and current information.\n- Avoid redundancy and prioritize clarity.\n- Write in a fluid and natural manner, with a professional yet accessible tone.\n- If information is not found, simply state \"Not available\".\n- The report should be readable in 30 seconds and contain only the most relevant information.\n\nThe goal is to provide a **useful and actionable report** that will better prepare for the meeting and maximize the impact of the first exchange."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        640,
+        -100
+      ],
+      "id": "893fe105-e6db-45e9-a2f5-b7b94b88837c",
+      "name": "Lead Enrichment Agent"
+    },
+    {
+      "parameters": {
+        "name": "WebsiteAnalyzer",
+        "description": "Call this tool to analyze specific website URL. Send it the URL needed to analyze only.",
+        "workflowId": {
+          "__rl": true,
+          "value": "mOIjUQ2GrHUtcBOs",
+          "mode": "list",
+          "cachedResultName": "Sales Call 1. Analyse Website"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        640,
+        160
+      ],
+      "id": "c7786555-4ac0-48b4-9887-848aa3808cfb",
+      "name": "Analyse Website"
+    },
+    {
+      "parameters": {
+        "name": "Linkedin_Research_Tool",
+        "description": "Call this tool to get Linkedin research on lead. Send the name of the lead and his company Name.",
+        "workflowId": {
+          "__rl": true,
+          "value": "4m5QwbD7yPZpVbF9",
+          "mode": "list",
+          "cachedResultName": "Sales Call 2. Research Linkedin"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        800,
+        160
+      ],
+      "id": "d671d7a4-7916-4419-ae2e-5ccf84920883",
+      "name": "Research LinkedIn"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "02294be3-7aeb-4199-97dc-e57940b403aa",
+              "name": "url",
+              "value": "=https://{{ $json.query}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        560
+      ],
+      "id": "4de6e781-d7bb-41c6-8e4d-f5cbfcb0d3eb",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=# Agent Role:\nYou are an expert in business activity analysis and writing clear and impactful summaries. Your objective is to extract and structure essential information about a prospect from their website text content.\n\n# Objective:\nGenerate a **concise and structured report** describing the prospect's activity. This report must be precise, concise, and well-organized to be useful for a sales or marketing team.\n\n---\n\n# Report Structure:\n\n## 1. **Prospect Name and Identity**\n   - Company or professional name\n   - Slogan (if available)\n   - Website URL\n\n## 2. **General Overview**\n   - Short description of the company (2-3 sentences maximum)\n   - Main business sector\n   - Possible specialization or niche\n\n## 3. **Key Products & Services**\n   - List of main products/services offered\n   - Keywords related to offerings (e.g., \"SaaS solutions\", \"business coaching\", \"digital marketing agency\")\n   - Added value or differentiation from the market (if identifiable)\n\n## 4. **Targets & Clients**\n   - Type of targeted clientele (B2B, B2C, specific sector, SMEs/large companies, etc.)\n   - Problems or needs the company addresses\n   - Market positioning (high-end, accessible, custom, etc.)\n\n## 5. **Positioning & Differentiation**\n   - Main differentiating element (e.g., technological innovation, personalized approach, sector expertise...)\n   - Key marketing messages used on the site\n\n---\n\n# Specific Instructions:\n1. Extract only **relevant and structuring information**. No unnecessary rewording.\n2. Do not generate superfluous content: go **straight to the essentials**.\n3. If key information is missing from the website, don't invent it but indicate it as **\"Not specified\"**.\n4. Write in a **fluid, professional, and concise** manner.\n5. Prioritize short and impactful sentences.\n6. Adapt the level of detail according to the richness of content available on the site.\n\n# Output Format:\nThe final report must be **clean, well-organized, and readable**, with clear formatting (bold titles, bullet points).\n\n---\n\n# Example Output:\n\n**1. Prospect Name and Identity**  \n- **Name**: WebBoost Agency  \n- **Slogan**: \"Boost your digital presence\"  \n- **URL**: [www.webboost.com](http://www.webboost.com)  \n\n**2. General Overview**  \n- **Description**: Agency specialized in website creation and digital strategy.  \n- **Business sector**: Digital marketing  \n- **Specialization**: Showcase websites and e-commerce for SMEs  \n\n**3. Key Products & Services**  \n- Website creation (WordPress, Shopify)  \n- SEO and organic search ranking  \n- Management of Google Ads and Facebook Ads advertising campaigns  \n- Digital strategy consulting  \n\n**4. Targets & Clients**  \n- **Main targets**: VSEs, SMEs, independents  \n- **Addressed needs**: Online visibility, customer acquisition  \n- **Positioning**: Turnkey service, adapted to SME budgets  \n\n**5. Positioning & Differentiation**  \n- Advanced SEO expertise  \n- Solutions adapted to small structures  \n- Transparent and commitment-free pricing  \n\n---\n\n# Usage:\n1. Analyze the textual content of the prospect's homepage in input\n2. Generate a concise and professional report\n3. Verify the clarity and readability of the output"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        440,
+        560
+      ],
+      "id": "6d7646f8-3907-4938-922d-d28650bb2a71",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "url": "=https://r.jina.ai/{{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer jina_5272ae9198de429682132d2c2b7293c4xCPzLb_6bxR0n0Yi681_hZqOjNzk"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        560
+      ],
+      "id": "84898d11-b0d1-43ae-807e-cf7df9197385",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e3092bb6-9031-4e1c-a291-e49bfe0624d0",
+              "name": "response",
+              "value": "={{ $item(\"0\").$node[\"Basic LLM Chain\"].json[\"response\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        560
+      ],
+      "id": "28de67ab-cb77-41a1-89ac-9653d9793c78",
+      "name": "Reponse1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        360,
+        760
+      ],
+      "id": "49d5b569-51d0-432f-8a88-e7178f25dbc9",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "2OhDxXM30rHANqGA",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"api_key\": \"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\",\n    \"query\": \"{{ $json.query }}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"general\",\n    \"include_raw_content\": false,\n    \"max_results\": 3\n} ",
+        "options": {}
+      },
+      "id": "99fcfba3-fa92-4d4f-85c5-814045dc5caf",
+      "name": "Tavily",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access the list of results from the input\nconst results = $input.first().json.results;\n\n// Filter and extract LinkedIn URLs\nconst linkedinUrls = results\n  .filter(result => result.url.includes(\"linkedin.com\")) // Check if the URL contains \"linkedin.com\"\n  .map(result => ({ json: { linkedinUrl: result.url } })); // Map to clean output\n\n// Return the filtered LinkedIn URLs\nreturn linkedinUrls;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        1080
+      ],
+      "id": "60b5a033-9e26-4771-ae91-8588d05cf635",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "=linkedinUrl"
+            }
+          ]
+        },
+        "options": {
+          "mergeLists": false
+        }
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        680,
+        1080
+      ],
+      "id": "47112f6c-d462-44f4-a97b-6e90aad91bfd",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a helpful URL links analyzer",
+              "role": "system"
+            },
+            {
+              "content": "=Read and analyse the results from google search. In the results section read and find the persons linkedin profile. Output only the main linkedin profile url with nothing else.\n\nThe results you should read: {{ $node[\"Aggregate\"].json.linkedinUrl}}\n\n## Example input:\n\n{\n  \"results\": [\n    {\n      \"title\": \"John Doe - Senior Software Engineer | LinkedIn\",\n      \"link\": \"https://www.linkedin.com/in/johndoe\",\n      \"snippet\": \"View John Doe’s profile on LinkedIn, the world's largest professional community.\"\n    },\n    {\n      \"title\": \"John Doe | GitHub\",\n      \"link\": \"https://github.com/johndoe\",\n      \"snippet\": \"GitHub profile for John Doe - projects, repositories, and contributions.\"\n    },\n    {\n      \"title\": \"John Doe - Blog\",\n      \"link\": \"https://johndoeblog.com\",\n      \"snippet\": \"Personal blog of John Doe where he shares tech articles and tutorials.\"\n    },\n    {\n      \"title\": \"John Doe - Twitter\",\n      \"link\": \"https://twitter.com/johndoe\",\n      \"snippet\": \"Follow John Doe on Twitter for updates and insights.\"\n    }\n  ]\n}\n\n## Example output:\n\nhttps://www.linkedin.com/in/johndoe\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        880,
+        1080
+      ],
+      "id": "95b1df4d-1c1c-4b8d-afd6-75d276e9ea40",
+      "name": "OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "bA8PFU70HFgHvDOA",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https:///fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "linkedin_url",
+              "value": "={{ $json.message.content.replace(/\"/g, '\\\\\"')  }}"
+            },
+            {
+              "name": "include_skills",
+              "value": "true"
+            },
+            {
+              "name": "include_certifications",
+              "value": "true"
+            },
+            {
+              "name": "include_publications",
+              "value": "false"
+            },
+            {
+              "name": "include_honors",
+              "value": "false"
+            },
+            {
+              "name": "include_volunteers",
+              "value": "false"
+            },
+            {
+              "name": "include_projects",
+              "value": "false"
+            },
+            {
+              "name": "include_patents",
+              "value": "false"
+            },
+            {
+              "name": "include_courses",
+              "value": "false"
+            },
+            {
+              "name": "include_organizations",
+              "value": "false"
+            },
+            {
+              "name": "include_profile_status",
+              "value": "true"
+            },
+            {
+              "name": "include_company_public_url",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-key",
+              "value": "272006cdb7msh70ce903d1d34626p1624d6jsn2b0f0ff41d3e"
+            },
+            {
+              "name": "x-rapidapi-host",
+              "value": "fresh-linkedin-profile-data.p.rapidapi.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        1080
+      ],
+      "id": "4fdf1fa5-c273-4394-8fba-635ace2de9fb",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a7dfc1ce-3155-408f-9c61-2272f13b7efd",
+              "name": "query",
+              "value": "={{ $json.query }} site:linkedin.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        20,
+        1080
+      ],
+      "id": "67a04361-2a79-4933-8095-11ee1bb9f18d",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"content\": \"search for the latest news in english about {{ $json.query }}\",\n      \"role\": \"user\"\n    }\n  ],\n  \"model\": \"sonar\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        20,
+        1560
+      ],
+      "id": "4c350fb1-6c10-4d4e-9964-b50f886dd0bb",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kRbUXkDL4cuMgJpB",
+          "name": "Perplexity 2(delete it)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "decda9c2-8c96-41be-a9c8-cd222d0488c4",
+              "name": "reponse",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        1520
+      ],
+      "id": "5080e58a-dedf-4f50-b368-bab5a99140a6",
+      "name": "Reponse"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d91fee9-ffc4-4217-a4e3-eb1dda54b11b",
+              "name": "reponse",
+              "value": "An error has occurred. Try again",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        1700
+      ],
+      "id": "ed7e14e0-67ef-43b7-ac86-28a94dced7e2",
+      "name": "Retenter"
+    },
+    {
+      "parameters": {
+        "content": "Main Agent",
+        "height": 580,
+        "width": 1420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -100,
+        -220
+      ],
+      "typeVersion": 1,
+      "id": "9c4de20b-b376-4146-bc49-197e10b9626b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Analyse Website",
+        "height": 460,
+        "width": 1160,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -100,
+        500
+      ],
+      "typeVersion": 1,
+      "id": "079a5edb-d81d-428b-910d-d6bb3eb6946e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Research Linkedin",
+        "height": 280,
+        "width": 1580,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -100,
+        1020
+      ],
+      "typeVersion": 1,
+      "id": "6ace5e16-90cf-4f24-831f-47b97924bda5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Research Company using Perplexity",
+        "height": 440,
+        "width": 620,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        1460
+      ],
+      "typeVersion": 1,
+      "id": "9610dacd-c429-4ccf-aa03-ad7e1dc27cfb",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Lead Enrichment Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perplexity": {
+      "ai_tool": [
+        [
+          {
+            "node": "Lead Enrichment Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Lead Enrichment Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal.com Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Enrichment Agent": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyse Website": {
+      "ai_tool": [
+        [
+          {
+            "node": "Lead Enrichment Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research LinkedIn": {
+      "ai_tool": [
+        [
+          {
+            "node": "Lead Enrichment Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Reponse1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Tavily",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Reponse",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retenter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d9570d4e-3014-442a-b38f-63c95108edb0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5a0350d5b2a75cfa1f378f51831e0f1c937d16bb9d4ca2b7dcaed94d1bc0741c"
+  },
+  "id": "5jEnUkip96RXuKVA",
+  "tags": []
+}
